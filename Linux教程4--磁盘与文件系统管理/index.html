@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=5.1.4">
+
+
+
+
+
+
+
+  <meta name="keywords" content="Linux,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="阮树斌 | 技术改变生活" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="本文为Linux系列教程的第1篇，主要讲解主机规划和磁盘分区，参考书籍为鸟哥的Linux私房菜。  文件系统特性Linux文件系统通常会将文件的权限与属性放置到inode中，实际数据放置到data block中，另外还有一个超级块（super block）记录整个文件系统的整体信息。  super block：  记录此文件系统的整体信息，包括inode与block的总量、使用量、剩余量，以及文">
+<meta name="keywords" content="Linux">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux教程4--磁盘与文件系统管理">
+<meta property="og:url" content="http://yoursite.com/Linux教程4--磁盘与文件系统管理/index.html">
+<meta property="og:site_name" content="阮树斌 | 技术改变生活">
+<meta property="og:description" content="本文为Linux系列教程的第1篇，主要讲解主机规划和磁盘分区，参考书籍为鸟哥的Linux私房菜。  文件系统特性Linux文件系统通常会将文件的权限与属性放置到inode中，实际数据放置到data block中，另外还有一个超级块（super block）记录整个文件系统的整体信息。  super block：  记录此文件系统的整体信息，包括inode与block的总量、使用量、剩余量，以及文">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-04-05T14:28:54.751Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux教程4--磁盘与文件系统管理">
+<meta name="twitter:description" content="本文为Linux系列教程的第1篇，主要讲解主机规划和磁盘分区，参考书籍为鸟哥的Linux私房菜。  文件系统特性Linux文件系统通常会将文件的权限与属性放置到inode中，实际数据放置到data block中，另外还有一个超级块（super block）记录整个文件系统的整体信息。  super block：  记录此文件系统的整体信息，包括inode与block的总量、使用量、剩余量，以及文">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/Linux教程4--磁盘与文件系统管理/">
+
+
+
+
+
+  <title>Linux教程4--磁盘与文件系统管理 | 阮树斌 | 技术改变生活</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+
+   <canvas class="fireworks" style="position: fixed;left: 0;top: 0;z-index: 1; pointer-events: none"></canvas> 
+   <script type="text/javascript" src="//cdn.bootcss.com/animejs/2.2.0/anime.min.js"></script> 
+   <script type="text/javascript" src="/js/src/fireworks.js"></script>
+
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+	<a href="https://github.com/Ruanshubin" class="github-corner" aria-label="View source on Github">
+	<svg width="80" height="80" viewbox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0" aria-hidden="true">
+	<path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+	<path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px" class="octo-arm"></path>
+	<path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path>
+	</svg>
+	</a>
+	<style>
+	.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}
+	</style>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">阮树斌 | 技术改变生活</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">交通 | 数据 | 算法 <br> Python | Java | Scala | Matlab | GIS</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-首页">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-分类">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-归档">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-标签">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-搜索">
+          <a href="/search/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-search"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+	
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux教程4--磁盘与文件系统管理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ruan Shubin">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="阮树斌 | 技术改变生活">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux教程4--磁盘与文件系统管理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-20T22:00:16+08:00">
+                2018-03-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i> 阅读量
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">字数统计&#58;</span>
+                
+                <span title="字数统计">
+                  3,793 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">
+                  16 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>本文为Linux系列教程的第1篇，主要讲解主机规划和磁盘分区，参考书籍为<a href="http://linux.vbird.org/" target="_blank" rel="noopener">鸟哥的Linux私房菜</a>。</p>
+</blockquote>
+<h2 id="文件系统特性"><a href="#文件系统特性" class="headerlink" title="文件系统特性"></a>文件系统特性</h2><p>Linux文件系统通常会将文件的权限与属性放置到inode中，实际数据放置到data block中，另外还有一个超级块（super block）记录整个文件系统的整体信息。</p>
+<ul>
+<li>super block：</li>
+</ul>
+<p>记录此文件系统的整体信息，包括inode与block的总量、使用量、剩余量，以及文件系统的格式与相关信息等；</p>
+<ul>
+<li>inode:</li>
+</ul>
+<p>记录文件的属性，一个文件占用一个inode，同时记录此文件的数据所在的block号码；</p>
+<ul>
+<li>block:</li>
+</ul>
+<p>实际记录文件的内容，若文件太大时，会占用多个block。假设某个文件的属性和权限数据放置在inode4，而这个inode记录的文件数据实际放置在2-7-13-15这4个block中，此时Linux系统能够据此来排列磁盘的阅读顺序，一次性将4个block内容读取出来，此种数据访问的方式我们称为索引式文件系统（indexed allocation）。与之对应的是FAT模式，它是链式的，每个block号码记录在上一个block中，相当于链表的读取方式，无inode。</p>
+<h3 id="碎片整理"><a href="#碎片整理" class="headerlink" title="碎片整理"></a>碎片整理</h3><blockquote>
+<p>需要碎片整理的原因是文件写入的block太过于离散了，此时文件的读取性能将会变得很差所致，这个时候需要通过碎片整理将同一个文件所属的block汇合在一起，这样数据的读取会比较容易，FAT的文件系统需要经常碎片整理一下，而Linux的Ext2文件系统由于是索引式的，基本上不太需要经常进行碎片整理。</p>
+</blockquote>
+<hr>
+<h2 id="Linux的Ex2文件系统（inode）"><a href="#Linux的Ex2文件系统（inode）" class="headerlink" title="Linux的Ex2文件系统（inode）"></a>Linux的Ex2文件系统（inode）</h2><h3 id="Data-block（数据块）"><a href="#Data-block（数据块）" class="headerlink" title="Data block（数据块）"></a>Data block（数据块）</h3><p>在Ext2文件系统中所支持的block大小有1KB、2KB、4KB三种，其文件系统限制如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Block大小</th>
+<th style="text-align:center">1KB</th>
+<th style="text-align:center">2KB</th>
+<th style="text-align:center">4KB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">最大单一文件限制</td>
+<td style="text-align:center">16GB</td>
+<td style="text-align:center">256GB</td>
+<td style="text-align:center">2TB</td>
+</tr>
+<tr>
+<td style="text-align:center">最大文件系统的容量</td>
+<td style="text-align:center">2TB</td>
+<td style="text-align:center">8TB</td>
+<td style="text-align:center">16TB</td>
+</tr>
+</tbody>
+</table>
+<p>原则上，block的大小与数量在格式化完就不能够改变了（除非重新格式化）；</p>
+<p>每个block内最多只能够放置一个文件的数据；</p>
+<p>如果文件大于block的大小，则1个文件会占用多个block数量；</p>
+<p>若文件小于block，则该block的剩余空间就不能够再使用了（磁盘空间会浪费）。</p>
+<p><strong> 文件系统根据需求合理选择，block大了容易造成磁盘容量浪费，小了的话，大型文件会占用数量较多的block，inode需要记录太多的block，可能导致文件系统不良的读写性能。</strong></p>
+<h3 id="inode（inode表格）"><a href="#inode（inode表格）" class="headerlink" title="inode（inode表格）"></a>inode（inode表格）</h3><blockquote>
+<p>inode记录的文件数据至少包括：</p>
+</blockquote>
+<ul>
+<li>该文件的访问模式（read/write/excute）;</li>
+<li>该文件的所有者与组（owner/group）；</li>
+<li>该文件的大小；</li>
+<li>该文件创建或状态改变的时间（ctime）；</li>
+<li>最近一次读取时间（atime）；</li>
+<li>最近修改的时间（mtime）；</li>
+<li>定义文件特性的标志（flag），如SetUID等；</li>
+<li>该文件真正内容的指向（pointer）；</li>
+</ul>
+<blockquote>
+<p>inode的特色：</p>
+</blockquote>
+<ul>
+<li>每个inode大小固定为128Bytes；</li>
+<li>每个文件均占用一个inode；</li>
+<li>文件系统能够创建的文件数量与inode的数量有关；</li>
+<li>inode记录一个block需要花费4Bytes。</li>
+</ul>
+<p>为记录大量的block，inode记录block号码的区域定义为12个直接、1个间接、1个二级间接、1个三级间接记录区。</p>
+<blockquote>
+<p>inode能够指定多少block呢？下面以1KB的block来说明：</p>
+</blockquote>
+<ul>
+<li>12个直接指向：12*1K=12K；</li>
+<li>1个间接指向：（1024/4）*1K=256K；</li>
+<li>1个二级间接指向：（1024/4）（1024/4）1K=2562K</li>
+<li>同理，1个三级间接指向：2563K</li>
+</ul>
+<p>总额：12+256+2562+2563（K）=16GB；与文件系统系统限制一致，此方法不能用于2KB及4KB的block计算中，因为这两者将会受到Ext2文件系统自身的限制，计算结果会不大符合。</p>
+<h3 id="superblock（超级块）"><a href="#superblock（超级块）" class="headerlink" title="superblock（超级块）"></a>superblock（超级块）</h3><p>记录的信息如下：</p>
+<ul>
+<li>block与inode的总量；</li>
+<li>未使用与已使用的inode/block量；</li>
+<li>block与inode的大小（block：1K/2K/4K，inode：128Bytes）；</li>
+<li>文件系统的挂载时间、最后一次写入数据的时间、最后一次检验磁盘（fask）的时间等文件系统相关的信息；<ul>
+<li>-1个validbit数值，若该文件系统已被挂载，则valid bit为0，否则为1。</li>
+</ul>
+</li>
+</ul>
+<p>一般来说， superblock大小为1024Bytes，每个blockGroup都可能含有superblock， 主要作用是防止superblock挂掉。</p>
+<h3 id="File-System-Description（文件系统描述说明）"><a href="#File-System-Description（文件系统描述说明）" class="headerlink" title="File System Description（文件系统描述说明）"></a>File System Description（文件系统描述说明）</h3><p>主要描述各个blockGroup的起止block号码。</p>
+<h3 id="bitemap（对照表）"><a href="#bitemap（对照表）" class="headerlink" title="bitemap（对照表）"></a>bitemap（对照表）</h3><p>包括block bitemap及inode bitemap：<br>block bitemap：空或非空；<br>inode bitemap：未使用或正在使用。</p>
+<p>以上所有信息，均可通过<strong> dumpe2fs </strong>这个命令来查询：</p>
+<ul>
+<li>dumpe2fs [-bh] 设备文件名<ul>
+<li>-b：列出保留为坏道的部分；</li>
+<li>-h：仅列出superblock的数据，不列出其他区段内容。</li>
+</ul>
+</li>
+<li>df 调出目前挂载的设备</li>
+</ul>
+<p><strong> 命令行： </strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dumpe2fs –h /dev/sda2</span><br></pre></td></tr></table></figure>
+<p><strong> 返回结果：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">dumpe2fs 1.42.9 (28-Dec-2013)</span><br><span class="line">Filesystem volume name:   &lt;none&gt;</span><br><span class="line">Last mounted on:          /</span><br><span class="line">Filesystem UUID:          c08f8c76-c1ea-48fd-8423-a33d6145a329</span><br><span class="line">Filesystem magic number:  0xEF53</span><br><span class="line">Filesystem revision #:    1 (dynamic)</span><br><span class="line">Filesystem features:      has_journal ext_attr resize_inode dir_index filetype needs_recovery extent 64bit flex_bg sparse_super large_file huge_file uninit_bg dir_nlink extra_isize</span><br><span class="line">Filesystem flags:         signed_directory_hash </span><br><span class="line">Default mount options:    user_xattr acl</span><br><span class="line">Filesystem state:         clean     # 文件系统没有问题（clean）</span><br><span class="line">Errors behavior:          Continue</span><br><span class="line">Filesystem OS type:       Linux</span><br><span class="line">Inode count:              1910080  # inode总数</span><br><span class="line">Block count:              7679488  #block总数</span><br><span class="line">Reserved block count:     383973</span><br><span class="line">Free blocks:              3575247   #还有多少block可用</span><br><span class="line">Free inodes:              1705442   #还有多少inode可用</span><br><span class="line">First block:              0</span><br><span class="line">Block size:               4096       #block大小</span><br><span class="line">Fragment size:            4096</span><br><span class="line">Group descriptor size:    64</span><br><span class="line">Reserved GDT blocks:      1022</span><br><span class="line">Blocks per group:         32768</span><br><span class="line">Fragments per group:      32768</span><br><span class="line">Inodes per group:         8128</span><br><span class="line">Inode blocks per group:   508</span><br><span class="line">Flex block group size:    16</span><br><span class="line">Filesystem created:       Thu Oct 19 04:42:40 2017</span><br><span class="line">Last mount time:          Sun Nov  5 18:34:03 2017</span><br><span class="line">Last write time:          Sun Nov  5 18:33:56 2017</span><br><span class="line">Mount count:              9</span><br><span class="line">Maximum mount count:      -1</span><br><span class="line">Last checked:             Mon Oct 30 02:06:59 2017</span><br><span class="line">Check interval:           0 (&lt;none&gt;)</span><br><span class="line">Lifetime writes:          7521 MB</span><br><span class="line">Reserved blocks uid:      0 (user root)</span><br><span class="line">Reserved blocks gid:      0 (group root)</span><br><span class="line">First inode:              11</span><br><span class="line">Inode size:               256</span><br><span class="line">Required extra isize:     28</span><br><span class="line">Desired extra isize:      28</span><br><span class="line">Journal inode:            8</span><br><span class="line">First orphan inode:       551269</span><br><span class="line">Default directory hash:   half_md4</span><br><span class="line">Directory Hash Seed:      967fd3cc-7cec-4848-a2e0-d40a6742de14</span><br><span class="line">Journal backup:           inode blocks</span><br><span class="line">Journal features:         journal_incompat_revoke journal_64bit</span><br><span class="line">Journal size:             128M  # 日志文件容量</span><br><span class="line">Journal length:           32768</span><br><span class="line">Journal sequence:         0x00010919</span><br><span class="line">Journal start:            1</span><br></pre></td></tr></table></figure>
+<p><strong> 与目录树的关系 </strong></p>
+<p>查看文件所占用的inode号码时，可以用ls –i命令处理。</p>
+<h3 id="Ext2-Ext3文件的访问与日志文件系统的功能"><a href="#Ext2-Ext3文件的访问与日志文件系统的功能" class="headerlink" title="Ext2/Ext3文件的访问与日志文件系统的功能"></a>Ext2/Ext3文件的访问与日志文件系统的功能</h3><p>新增文件时，文件系统的行为为：</p>
+<ul>
+<li>先确定用户对于欲添加文件的目录是否有w与x的权限，若有的话才能添加；</li>
+<li>根据inode bitemap找到没有使用的inode号码，并将新文件的权限/属性写入；</li>
+<li>根据block bitemap找到没有使用中的block号码，并将实际的数据写入到block中，且更新inode的block指向数据;</li>
+<li>将刚才写入的inode与block数据同步到inode bitemap与block bitemap，并更新superblock的内容。</li>
+</ul>
+<p>inode bitemap、block bitemap及superblock的数据经常变动，因此称之为<strong>中间数据（meta data）</strong>，当系统因不明原因中断时，可能造成中间数据的内容与实际数据的存放区域出现不一致的情况。</p>
+<p>如果发生上述问题，系统会在重新启动的时候，通过Superblock中的valid bit（是否有挂载）及文件系统的state（clean与否）等状态来判断是否强制进行数据一致性的检查。若有需要检查时，则以e2fsck这支程序进行。</p>
+<p>因为检查需要扫描整个文件系统，故非常耗时，<strong>日志文件系统</strong>应运而生。</p>
+<p>其工作模式如下：</p>
+<ul>
+<li>预备：当系统写入一个文件时，会先在日志记录块中记录某个文件准备写入的信息；</li>
+<li>实际写入：开始写入文件的权限与数据，开始更新meta data的数据；</li>
+<li>结束：完成数据与meta data的更新后，在日志记录块中完成该文件的记录。</li>
+</ul>
+<p>只要只需扫描问题文件即可，可以快速定位，进而达到快速修复文件系统的目的。</p>
+<p><strong> 而Ext3与Ext2的区别就在于引入了日志文件系统的功能。</strong></p>
+<h3 id="Linux文件系统的操作"><a href="#Linux文件系统的操作" class="headerlink" title="Linux文件系统的操作"></a>Linux文件系统的操作</h3><p>加载到内存中的文件，如果频繁的写入到硬盘中，效率会非常低，故引入异步处理（asynchronously）的方式。</p>
+<p>其运行模式为，若内存中的数据发生更改，此时修改部分数据会被设置为dirty，系统不定时的将dirty的数据写回磁盘，以保持内存数据与硬盘数据的一致性。</p>
+<p>可使用<strong>sync</strong>命令 来强制将内存中的dirty数据写回到磁盘中去。</p>
+<hr>
+<h2 id="文件系统的简单操作"><a href="#文件系统的简单操作" class="headerlink" title="文件系统的简单操作"></a>文件系统的简单操作</h2><h3 id="磁盘与目录的容量：df，du"><a href="#磁盘与目录的容量：df，du" class="headerlink" title="磁盘与目录的容量：df，du"></a>磁盘与目录的容量：df，du</h3><blockquote>
+<p>df：列出文件系统的整体磁盘使用量</p>
+</blockquote>
+<ul>
+<li>-h：以人们较易阅读的GB/MB/KB等格式自行显示；</li>
+<li>-i：以inode的数量来显示。</li>
+</ul>
+<blockquote>
+<p>du：评估文件系统的磁盘使用量</p>
+</blockquote>
+<ul>
+<li>-h：以人们较易阅读的GB/MB/KB等格式自行显示；</li>
+<li>-s：列出总量而已。</li>
+</ul>
+<h3 id="连接文件：ln"><a href="#连接文件：ln" class="headerlink" title="连接文件：ln"></a>连接文件：ln</h3><blockquote>
+<p>hard link（硬连接或实际连接）</p>
+</blockquote>
+<ul>
+<li><p>hard link只是在某个目录下新建一条文件名连接到某inode号码的关联记录而已；</p>
+</li>
+<li><p>如果你将任何一个文件名删除，其实inode与block还是存在的；</p>
+</li>
+<li><p>通常情况下，不占用inode与block，只是在目录的block中添加一条记录而已。</p>
+</li>
+<li><p>Hard link的限制为：</p>
+<ul>
+<li>不能跨文件系统；</li>
+<li>不能连接到目录。</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>symbolic link（符号连接，即快捷方式）</p>
+</blockquote>
+<p>symbolic link实际上是创建一个独立的文件指向某个文件的文件名，会占用inode与block。</p>
+<ul>
+<li>ln [-sf]<ul>
+<li>-s：默认硬连接，添加s为符号连接；</li>
+<li>-f：如果目标文件存在时，直接删除后再创建。</li>
+</ul>
+</li>
+</ul>
+<h3 id="目录的连接数量"><a href="#目录的连接数量" class="headerlink" title="目录的连接数量"></a>目录的连接数量</h3><p>新建目录连接数为2，且上一级目录增加1，因为创建目录时会出现3个东西：</p>
+<p><strong>filename</strong></p>
+<p><strong>filename/. 当前目录</strong></p>
+<p><strong>filename/.. 上一级目录</strong></p>
+<p>前两个等同，第三个为上一级目录。</p>
+<hr>
+<h2 id="磁盘的分区、格式化、检验与挂载"><a href="#磁盘的分区、格式化、检验与挂载" class="headerlink" title="磁盘的分区、格式化、检验与挂载"></a>磁盘的分区、格式化、检验与挂载</h2><h3 id="磁盘分区：fdisk"><a href="#磁盘分区：fdisk" class="headerlink" title="磁盘分区：fdisk"></a>磁盘分区：fdisk</h3><blockquote>
+<p>fdisk /dev/hdc</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">Welcome to fdisk (util-linux 2.23.2).</span><br><span class="line">Changes will remain in memory only, until you decide to write them.</span><br><span class="line">Be careful before using the write command.</span><br><span class="line">Command (m for help): m</span><br><span class="line">Command action</span><br><span class="line">   a   toggle a bootable flag</span><br><span class="line">   b   edit bsd disklabel</span><br><span class="line">   c   toggle the dos compatibility flag</span><br><span class="line">   d   delete a partition  # 删除1个分区 </span><br><span class="line">   g   create a new empty GPT partition table</span><br><span class="line">   G   create an IRIX (SGI) partition table</span><br><span class="line">   l   list known partition types</span><br><span class="line">   m   print this menu</span><br><span class="line">   n   add a new partition  # 新增一个分区</span><br><span class="line">   o   create a new empty DOS partition table</span><br><span class="line">   p   print the partition table  # 打印分区表</span><br><span class="line">   q   quit without saving changes  # 不存储退出</span><br><span class="line">   s   create a new empty Sun disklabel</span><br><span class="line">   t   change a partition&apos;s system id</span><br><span class="line">   u   change display/entry units</span><br><span class="line">   v   verify the partition table</span><br><span class="line">   w   write table to disk and exit  # 保存退出</span><br><span class="line">   x   extra functionality (experts only)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>输入p打印分区表：</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Command (m for help): p</span><br><span class="line">Disk /dev/sda: 42.9 GB, 42949672960 bytes, 83886080 sectors</span><br><span class="line">Units = sectors of 1 * 512 = 512 bytes</span><br><span class="line">Sector size (logical/physical): 512 bytes / 512 bytes</span><br><span class="line">I/O size (minimum/optimal): 512 bytes / 512 bytes</span><br><span class="line">Disk label type: dos</span><br><span class="line">Disk identifier: 0x000d5bbd</span><br><span class="line"></span><br><span class="line">   Device Boot      Start         End      Blocks   Id  System</span><br><span class="line">/dev/sda1   *        2048      411647      204800   83  Linux</span><br><span class="line">/dev/sda2          411648    61847551    30717952   83  Linux</span><br><span class="line">/dev/sda3        61847552    83886079    11019264   83  Linux</span><br><span class="line"># 设备文件名 开机区否 开始柱面   结束柱面 1KB大小容量 磁盘分区内的系统</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>fdisk –l 查询所有分区情况</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Disk /dev/sda: 42.9 GB, 42949672960 bytes, 83886080 sectors</span><br><span class="line">Units = sectors of 1 * 512 = 512 bytes</span><br><span class="line">Sector size (logical/physical): 512 bytes / 512 bytes # 扇区大小</span><br><span class="line">I/O size (minimum/optimal): 512 bytes / 512 bytes</span><br><span class="line">Disk label type: dos</span><br><span class="line">Disk identifier: 0x000d5bbd</span><br><span class="line"></span><br><span class="line">   Device Boot      Start         End      Blocks   Id  System</span><br><span class="line">/dev/sda1   *        2048      411647      204800   83  Linux</span><br><span class="line">/dev/sda2          411648    61847551    30717952   83  Linux</span><br><span class="line">/dev/sda3        61847552    83886079    11019264   83  Linux</span><br></pre></td></tr></table></figure>
+<p><strong>注意，只要最后不按w，之前的所有操作均无效，所以可以练习删除及新增分区。</strong></p>
+<blockquote>
+<p>新增分区需要注意的地方：</p>
+</blockquote>
+<ul>
+<li>SATA硬盘最多支持到15号的分区，IDE最多支持到63号；</li>
+<li>fdisk没有办法处理大于2TB以上的磁盘分区（2TB以上使用GNU的parted命令）。</li>
+</ul>
+<h3 id="磁盘格式化"><a href="#磁盘格式化" class="headerlink" title="磁盘格式化"></a>磁盘格式化</h3><blockquote>
+<p>mkfs（make file system） [-t 文件系统格式] 设备文件名</p>
+</blockquote>
+<ul>
+<li>-t：可以接文件系统格式，例如ext3，ext2，vfat等（系统有支持才会生效）。</li>
+</ul>
+<blockquote>
+<p>mkefs</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mke2fs  [  -c  | -l filename ] [ -b block-size ] [ -D ] [ -f fragment-size ] [ -g blocks-per-group ] [ -G number-of-groups ] [ -i bytes-per-inode ] [ -I</span><br><span class="line">       inode-size ] [ -j ] [ -J journal-options ] [ -N number-of-inodes ] [ -n ] [ -m reserved-blocks-percentage ] [ -o creator-os ] [ -O feature[,...]  ] [ -q</span><br><span class="line">       ] [ -r fs-revision-level ] [ -E extended-options ] [ -v ] [ -F ] [ -L volume-label ] [ -M last-mounted-directory ] [ -S ] [ -t fs-type ] [ -T usage-type</span><br><span class="line">       ] [ -U UUID ] [ -V ] device [ blocks-count ]</span><br></pre></td></tr></table></figure>
+<h3 id="磁盘检验：fsck，badblocks"><a href="#磁盘检验：fsck，badblocks" class="headerlink" title="磁盘检验：fsck，badblocks"></a>磁盘检验：fsck，badblocks</h3><p>fsck：File System Check</p>
+<h3 id="磁盘挂载：mount"><a href="#磁盘挂载：mount" class="headerlink" title="磁盘挂载：mount"></a>磁盘挂载：mount</h3><h3 id="磁盘参数修改：mknod"><a href="#磁盘参数修改：mknod" class="headerlink" title="磁盘参数修改：mknod"></a>磁盘参数修改：mknod</h3><p>设备的文件有magor与minor数值：</p>
+<p><strong> ll /dev/sda* </strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">brw-rw----. 1 root disk 8, 0 Nov  6 02:07 /dev/sda</span><br><span class="line">brw-rw----. 1 root disk 8, 1 Nov  6 02:07 /dev/sda1</span><br><span class="line">brw-rw----. 1 root disk 8, 2 Nov  6 02:07 /dev/sda2</span><br><span class="line">brw-rw----. 1 root disk 8, 3 Nov  6 02:07 /dev/sda3</span><br><span class="line"># 8：magor（主设备代码） 0-3：minor（次设备代码）</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="设置开机挂载"><a href="#设置开机挂载" class="headerlink" title="设置开机挂载"></a>设置开机挂载</h2><h3 id="开机挂载"><a href="#开机挂载" class="headerlink" title="开机挂载"></a>开机挂载</h3><blockquote>
+<p>cat /etc/fstab</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">UUID=c08f8c76-c1ea-48fd-8423-a33d6145a329  /        ext4    defaults        1 1</span><br><span class="line">UUID=9b54bd04-5920-4bf5-b94b-1ab6a753c373  /boot   ext4    defaults        1 2</span><br><span class="line">UUID=5c47e29d-176f-464d-ba1f-e5fa98e9a02f  /home    ext4    defaults        1 2</span><br><span class="line">UUID=fbc385ee-49c6-45b0-bc2b-248a599f6f21  swap     swap    defaults        0 0</span><br></pre></td></tr></table></figure>
+<p>UUID码全称是通用唯一识别码 (Universally Unique Identifier, UUID),它 是一个软件建构的标准，亦为自由软件基金会 (Open Software Foundation, OSF) 的组织在分布式计算环境 (Distributed Computing Environment, DCE) 领域的一部分。UUID 的目的，是让分布式系统中的所有元素，都能有唯一的辨识信息，而不需要通过中央控制端来做辨识信息的指定。</p>
+<ul>
+<li>第二列：挂载点；</li>
+<li>第三列：磁盘分区的文件系统；</li>
+<li>第四列：文件系统参数；</li>
+<li>第五列：能否被dump备份命令作用。<ul>
+<li>0：不要做dump备份；1：每天进行dump备份；2：其他不定日期dump备份</li>
+</ul>
+</li>
+<li>第六列：是否以fsck检验扇区。<ul>
+<li>开机的过程中，系统默认会以fsck检验我们的文件系统是否完整；</li>
+<li>特殊文件系统不需要检验，如swap、/proc与/sys等；</li>
+<li>0：不检验 1：优先检验 2：次要检验</li>
+</ul>
+</li>
+</ul>
+<p><strong> 注意：/etc/fstab为开机时的配置文件，实际文件系统的挂载是记录到etc/mtab与/proc/mounts这两个文件中去的。</strong></p>
+<h3 id="特殊设备loop挂载"><a href="#特殊设备loop挂载" class="headerlink" title="特殊设备loop挂载"></a>特殊设备loop挂载</h3><hr>
+<h2 id="内存交换空间（swap）的构建"><a href="#内存交换空间（swap）的构建" class="headerlink" title="内存交换空间（swap）的构建"></a>内存交换空间（swap）的构建</h2><h3 id="使用物理分区构建"><a href="#使用物理分区构建" class="headerlink" title="使用物理分区构建"></a>使用物理分区构建</h3><p>swap的功能就是在应付物理内存不足的情况下所造成的内存扩展记录的功能。</p>
+<p>新建swap分区的方法：</p>
+<ul>
+<li>分区：先使用fdisk在你的磁盘中分出一个分区给系统作为swap；<ul>
+<li>操作完之后，执行partprobe让内核更新分区表。</li>
+</ul>
+</li>
+<li>格式化：mkswap 设备文件名；</li>
+<li>使用：swap设备启动，swapon 设备文件名；</li>
+<li>查看：通过free命令查看内存的使用情况。</li>
+</ul>
+<h3 id="swap使用上的限制"><a href="#swap使用上的限制" class="headerlink" title="swap使用上的限制"></a>swap使用上的限制</h3><ul>
+<li>单一swap已经没有2GB的限制；</li>
+<li>最多仅能创建32个swap；</li>
+<li>swap总量最大仅能达64GB。</li>
+</ul>
+      
+    </div>
+    
+    
+    
+	
+	<div>
+	
+		<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+	
+	</div>
+
+    
+      <div>
+        <div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/wechat-qcode.jpg" alt="Ruan Shubin wechat" style="width: 200px; max-width: 100%">
+    <div>欢迎您扫一扫上面的二维码，关注我的微信公众号！</div>
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    Ruan Shubin
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://yoursite.com/Linux教程4--磁盘与文件系统管理/" title="Linux教程4--磁盘与文件系统管理">http://yoursite.com/Linux教程4--磁盘与文件系统管理/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux/" rel="tag"><i class="fa fa-tag"></i> Linux</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/Linux教程3--文件与目录管理/" rel="next" title="Linux教程3--文件与目录管理">
+                <i class="fa fa-chevron-left"></i> Linux教程3--文件与目录管理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/Linux教程5--文件压缩及打包/" rel="prev" title="Linux教程5--文件压缩及打包">
+                Linux教程5--文件压缩及打包 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_weixin">微信</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_tsina">新浪微博</a>
+<a class="jiathis_button_zhihu">知乎</a>
+<a class="jiathis_button_share">一键分享</a>
+
+<a href="http://www.jiathis.com/share?uid=2140465" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config={
+  data_track_clickback:true,
+  summary:"",
+  shortUrl:false,
+  hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMzc1NC8xMDMwOA"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Ruan Shubin">
+            
+              <p class="site-author-name" itemprop="name">Ruan Shubin</p>
+              <p class="site-description motion-element" itemprop="description">一万年太久，只争朝夕！</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/Ruanshubin" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://weibo.com/u/2487162561" target="_blank" title="Weibo">
+                      
+                        <i class="fa fa-fw fa-weibo"></i>Weibo</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://blog.csdn.net/wenwu_both" target="_blank" title="CSDN">
+                      
+                        <i class="fa fa-fw fa-book"></i>CSDN</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="http://tcrl.zju.edu.cn/" target="_blank" title="Lab">
+                      
+                        <i class="fa fa-fw fa-users"></i>Lab</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#文件系统特性"><span class="nav-number">1.</span> <span class="nav-text">文件系统特性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#碎片整理"><span class="nav-number">1.1.</span> <span class="nav-text">碎片整理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux的Ex2文件系统（inode）"><span class="nav-number">2.</span> <span class="nav-text">Linux的Ex2文件系统（inode）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Data-block（数据块）"><span class="nav-number">2.1.</span> <span class="nav-text">Data block（数据块）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#inode（inode表格）"><span class="nav-number">2.2.</span> <span class="nav-text">inode（inode表格）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#superblock（超级块）"><span class="nav-number">2.3.</span> <span class="nav-text">superblock（超级块）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#File-System-Description（文件系统描述说明）"><span class="nav-number">2.4.</span> <span class="nav-text">File System Description（文件系统描述说明）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bitemap（对照表）"><span class="nav-number">2.5.</span> <span class="nav-text">bitemap（对照表）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Ext2-Ext3文件的访问与日志文件系统的功能"><span class="nav-number">2.6.</span> <span class="nav-text">Ext2/Ext3文件的访问与日志文件系统的功能</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Linux文件系统的操作"><span class="nav-number">2.7.</span> <span class="nav-text">Linux文件系统的操作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文件系统的简单操作"><span class="nav-number">3.</span> <span class="nav-text">文件系统的简单操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#磁盘与目录的容量：df，du"><span class="nav-number">3.1.</span> <span class="nav-text">磁盘与目录的容量：df，du</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#连接文件：ln"><span class="nav-number">3.2.</span> <span class="nav-text">连接文件：ln</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#目录的连接数量"><span class="nav-number">3.3.</span> <span class="nav-text">目录的连接数量</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#磁盘的分区、格式化、检验与挂载"><span class="nav-number">4.</span> <span class="nav-text">磁盘的分区、格式化、检验与挂载</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#磁盘分区：fdisk"><span class="nav-number">4.1.</span> <span class="nav-text">磁盘分区：fdisk</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#磁盘格式化"><span class="nav-number">4.2.</span> <span class="nav-text">磁盘格式化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#磁盘检验：fsck，badblocks"><span class="nav-number">4.3.</span> <span class="nav-text">磁盘检验：fsck，badblocks</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#磁盘挂载：mount"><span class="nav-number">4.4.</span> <span class="nav-text">磁盘挂载：mount</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#磁盘参数修改：mknod"><span class="nav-number">4.5.</span> <span class="nav-text">磁盘参数修改：mknod</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设置开机挂载"><span class="nav-number">5.</span> <span class="nav-text">设置开机挂载</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#开机挂载"><span class="nav-number">5.1.</span> <span class="nav-text">开机挂载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#特殊设备loop挂载"><span class="nav-number">5.2.</span> <span class="nav-text">特殊设备loop挂载</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#内存交换空间（swap）的构建"><span class="nav-number">6.</span> <span class="nav-text">内存交换空间（swap）的构建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用物理分区构建"><span class="nav-number">6.1.</span> <span class="nav-text">使用物理分区构建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#swap使用上的限制"><span class="nav-number">6.2.</span> <span class="nav-text">swap使用上的限制</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ruan Shubin</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">全站总字数&#58;</span>
+    
+    <span title="全站总字数">16.1k</span>
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 访问用户数
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i> 访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+</body>
+</html>
